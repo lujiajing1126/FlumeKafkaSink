@@ -6,13 +6,18 @@ package org.apache.flume.sink.kafka;
 import kafka.consumer.ConsumerIterator;
 import kafka.consumer.KafkaStream;
 
-public class ConsumerTest implements Runnable {
-    private KafkaStream m_stream;
-    private int m_threadNumber;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 
-    public ConsumerTest(KafkaStream a_stream, int a_threadNumber) {
+public class ConsumerTest implements Runnable {
+    private KafkaStream<byte[], byte[]> m_stream;
+    private int m_threadNumber;
+    private CyclicBarrier cyclicBarrier;
+
+    public ConsumerTest(KafkaStream<byte[],byte[]> a_stream, int a_threadNumber,CyclicBarrier cyclicBarrier) {
         m_threadNumber = a_threadNumber;
         m_stream = a_stream;
+        this.cyclicBarrier = cyclicBarrier;
     }
 
     public void run() {
@@ -20,5 +25,10 @@ public class ConsumerTest implements Runnable {
         while (it.hasNext())
             System.out.println("Thread " + m_threadNumber + ": " + new String(it.next().message()));
         System.out.println("Shutting down Thread: " + m_threadNumber);
+        try {
+            cyclicBarrier.await();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 }
